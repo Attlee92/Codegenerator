@@ -168,11 +168,12 @@
         }
 
         function evNapja(datum) {
-            const evEleje = new Date(datum.getFullYear(), 0, 0);
-            const kulonbseg = datum - evEleje;
-            const egyNap = 1000 * 60 * 60 * 24;
-            return Math.floor(kulonbseg / egyNap);
-        }
+    const ev = datum.getFullYear();
+    const maiNap = Date.UTC(ev, datum.getMonth(), datum.getDate());
+    const evEleje = Date.UTC(ev, 0, 0);
+
+    return Math.round((maiNap - evEleje) / 86400000);
+}
 
         function kodGeneralas() {
             const ma = new Date();
