@@ -1,11 +1,13 @@
+
 <!DOCTYPE html>
 <html lang="hu">
-
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Termékkód Generátor</title>
     <style>
+        * { box-sizing: border-box; }
+
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -27,21 +29,24 @@
             position: absolute;
             top: 15px;
             right: 15px;
-            cursor: pointer;
+            display: flex;
+            gap: 8px;
             font-size: 24px;
             user-select: none;
         }
 
         .zaszlo {
+            display: inline-block;
             padding: 5px;
             opacity: 0.5;
             transition: opacity 0.3s ease;
-            margin-left: 8px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
         }
 
         .zaszlo.aktiv {
             opacity: 1;
-            border-bottom: 2px solid #007bff;
+            border-bottom-color: #007bff;
         }
 
         h2 {
@@ -49,8 +54,7 @@
             text-align: center;
         }
 
-        label,
-        select {
+        label, select {
             display: block;
             margin: 15px 0 5px;
             width: 100%;
@@ -60,17 +64,25 @@
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 6px;
+            font-size: 16px;
+            background-color: #fff;
         }
 
-        button {
+        button.generalasGomb {
             width: 100%;
             padding: 10px;
+            margin-top: 8px;
             background: #007bff;
             color: white;
             border: none;
             border-radius: 6px;
+            font-size: 16px;
             font-weight: bold;
             cursor: pointer;
+        }
+
+        button.generalasGomb:hover {
+            background: #0069d9;
         }
 
         .general {
@@ -78,6 +90,7 @@
             font-size: 18px;
             color: green;
             text-align: center;
+            overflow-wrap: anywhere;
         }
 
         .termekLista {
@@ -89,13 +102,15 @@
             font-weight: bold;
         }
 
+        footer {
+            margin-top: 8px;
+            text-align: center;
+            font-weight: bold;
+        }
+
         @media (max-width: 600px) {
             .kontener {
                 padding: 15px;
-            }
-
-            .logoKep {
-                height: 40px;
             }
         }
     </style>
@@ -103,15 +118,31 @@
 
 <body>
     <div class="kontener">
+
         <div class="nyelvValtas">
-            <span id="zaszlo-hu" class="zaszlo aktiv" title="Magyar zászló" onclick="nyelvBeallitas('hu')">🇭🇺</span>
-            <span id="zaszlo-en" class="zaszlo" title="Angol zászló" onclick="nyelvBeallitas('en')">🇬🇧</span>
+            <span id="zaszlo-hu" class="zaszlo aktiv"
+                  title="Magyar"
+                  role="button"
+                  tabindex="0"
+                  onclick="nyelvBeallitas('hu')"
+                  onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();nyelvBeallitas('hu')}">🇭🇺</span>
+
+            <span id="zaszlo-en" class="zaszlo"
+                  title="English"
+                  role="button"
+                  tabindex="0"
+                  onclick="nyelvBeallitas('en')"
+                  onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();nyelvBeallitas('en')}">🇬🇧</span>
         </div>
 
         <h2 id="cim">Termékkód Generátor</h2>
+
         <p id="maiDatum"></p>
 
-        <label for="termekKod" id="cimkeTermek">Termékkód:</label>
+        <label for="termekKod" id="cimkeTermek">
+            Termékkód:
+        </label>
+
         <select id="termekKod">
             <option value="C">C - Cede (VDE)</option>
             <option value="K1">K1 - KN1 grit (VDE)</option>
@@ -129,14 +160,29 @@
             <option value="G">G - Gom (Caldic)</option>
         </select>
 
-        <button onclick="kodGeneralas()"><span id="gombSzoveg">Generálás</span></button>
+        <button type="button"
+                class="generalasGomb"
+                onclick="kodGeneralas()">
+            <span id="gombSzoveg">Generálás</span>
+        </button>
 
-        <p class="general"><strong><span id="generalCimke">Generált kód:</span></strong> <span id="generalKod"></span>
+        <p class="general" aria-live="polite">
+            <strong>
+                <span id="generalCimke">Generált kód:</span>
+            </strong>
+            <span id="generalKod"></span>
         </p>
 
         <div class="termekLista">
             <details>
-                <summary><strong><span id="jelentesCimke">Termékkódok jelentése</span></strong></summary>
+                <summary>
+                    <strong>
+                        <span id="jelentesCimke">
+                            Termékkódok jelentése
+                        </span>
+                    </strong>
+                </summary>
+
                 <ul>
                     <li><code>C</code> – Cede (VDE)</li>
                     <li><code>K1</code> – KN1 grit (VDE)</li>
@@ -156,71 +202,199 @@
             </details>
         </div>
     </div>
+
     <footer>
-        <center><b> © 2025 Készítette: Attila Kecskés</b></center>
+        © 2025 Készítette: Attila Kecskés
     </footer>
+
     <script>
-        const ervenyesKodok = ["C", "K1", "K3", "Z", "Z1", "O", "H", "R", "L", "T", "W", "M", "Me", "G"];
+        const ervenyesKodok = [
+            "C", "K1", "K3", "Z", "Z1", "O",
+            "H", "R", "L", "T", "W", "M", "Me", "G"
+        ];
+
         let aktualisNyelv = "hu";
 
         function kitoltes(szam, hossz) {
-            return ("000" + szam).slice(-hossz);
+            return String(szam).padStart(hossz, "0");
         }
 
+        // Napsorszám kiszámítása óraátállítástól függetlenül
         function evNapja(datum) {
-    const ev = datum.getFullYear();
-    const maiNap = Date.UTC(ev, datum.getMonth(), datum.getDate());
-    const evEleje = Date.UTC(ev, 0, 0);
+            const ev = datum.getFullYear();
 
-    return Math.round((maiNap - evEleje) / 86400000);
-}
+            const maiNap = Date.UTC(
+                ev,
+                datum.getMonth(),
+                datum.getDate()
+            );
+
+            const evEleje = Date.UTC(ev, 0, 0);
+
+            return Math.round(
+                (maiNap - evEleje) / 86400000
+            );
+        }
+
+        // AUTOMATIKUS ÉVBETŰ
+        // 2025 = F
+        // 2026 = G
+        // 2027 = H
+        // 2028 = I
+        // 2045 = Z
+        // 2046 = A
+
+        function evBetu(ev) {
+            const betuk = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+            const index = ((ev - 2020) % 26 + 26) % 26;
+
+            return betuk[index];
+        }
+
+        // TERMÉKKÓD GENERÁLÁSA
 
         function kodGeneralas() {
             const ma = new Date();
+
             const evNap = kitoltes(evNapja(ma), 3);
-            const evKod = "F";
+
+            const evKod = evBetu(ma.getFullYear());
+
             const sorszam = "01";
-            const termekKodBe = document.getElementById("termekKod").value.trim();
+
+            const termekKodBe = document
+                .getElementById("termekKod")
+                .value.trim();
+
             if (!ervenyesKodok.includes(termekKodBe)) {
-                alert(aktualisNyelv === "hu" ? "Hibás termékkód!" : "Invalid product code!");
+                alert(
+                    aktualisNyelv === "hu"
+                        ? "Hibás termékkód!"
+                        : "Invalid product code!"
+                );
                 return;
             }
-            const veglegesKod = `${evNap}${termekKodBe}${evKod}${sorszam}`;
-            document.getElementById("generalKod").innerText = veglegesKod;
+
+            const veglegesKod =
+                `${evNap}${termekKodBe}${evKod}${sorszam}`;
+
+            document.getElementById("generalKod")
+                .textContent = veglegesKod;
+
+            datumMegjelenitesFrissitese();
         }
+
+        // DÁTUM MEGJELENÍTÉSE
 
         function datumMegjelenitesFrissitese() {
             const ma = new Date();
-            const napok = ["vasárnap", "hétfő", "kedd", "szerda", "csütörtök", "péntek", "szombat"];
-            const angolNapok = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-            const honapNevek = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+            const napok = [
+                "vasárnap",
+                "hétfő",
+                "kedd",
+                "szerda",
+                "csütörtök",
+                "péntek",
+                "szombat"
+            ];
+
+            const angolNapok = [
+                "Sunday",
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday"
+            ];
+
+            const honapNevek = [
+                "January",
+                "February",
+                "March",
+                "April",
+                "May",
+                "June",
+                "July",
+                "August",
+                "September",
+                "October",
+                "November",
+                "December"
+            ];
+
             const nap = ma.getDate();
             const honap = ma.getMonth();
             const ev = ma.getFullYear();
             const hetNapja = ma.getDay();
 
-            const huSzoveg = `Ma van: ${ev}. ${kitoltes(honap + 1, 2)}. ${kitoltes(nap, 2)}, ${napok[hetNapja]}`;
-            const enSzoveg = `Today is: ${angolNapok[hetNapja]}, ${honapNevek[honap]} ${nap}, ${ev}`;
+            const huSzoveg =
+                `Ma van: ${ev}. ${kitoltes(honap + 1, 2)}. ${kitoltes(nap, 2)}, ${napok[hetNapja]}`;
 
-            document.getElementById("maiDatum").innerText = aktualisNyelv === "hu" ? huSzoveg : enSzoveg;
+            const enSzoveg =
+                `Today is: ${angolNapok[hetNapja]}, ${honapNevek[honap]} ${nap}, ${ev}`;
+
+            document.getElementById("maiDatum")
+                .textContent =
+                aktualisNyelv === "hu"
+                    ? huSzoveg
+                    : enSzoveg;
         }
+
+        // MAGYAR / ANGOL NYELVVÁLTÁS
 
         function nyelvBeallitas(nyelv) {
             if (nyelv === aktualisNyelv) return;
+
             aktualisNyelv = nyelv;
-            document.getElementById("zaszlo-hu").classList.toggle("aktiv", nyelv === "hu");
-            document.getElementById("zaszlo-en").classList.toggle("aktiv", nyelv === "en");
-            document.getElementById("cim").innerText = nyelv === "hu" ? "Termékkód Generátor" : "Product Code Generator";
-            document.getElementById("cimkeTermek").innerText = nyelv === "hu" ? "Termékkód:" : "Product Code:";
-            document.getElementById("gombSzoveg").innerText = nyelv === "hu" ? "Generálás" : "Generate";
-            document.getElementById("generalCimke").innerText = nyelv === "hu" ? "Generált kód:" : "Generated code:";
-            document.getElementById("jelentesCimke").innerText = nyelv === "hu" ? "Termékkódok jelentése" : "Meaning of product codes";
+
+            document.documentElement.lang = nyelv;
+
+            document.getElementById("zaszlo-hu")
+                .classList.toggle("aktiv", nyelv === "hu");
+
+            document.getElementById("zaszlo-en")
+                .classList.toggle("aktiv", nyelv === "en");
+
+            document.getElementById("cim")
+                .textContent =
+                nyelv === "hu"
+                    ? "Termékkód Generátor"
+                    : "Product Code Generator";
+
+            document.getElementById("cimkeTermek")
+                .textContent =
+                nyelv === "hu"
+                    ? "Termékkód:"
+                    : "Product Code:";
+
+            document.getElementById("gombSzoveg")
+                .textContent =
+                nyelv === "hu"
+                    ? "Generálás"
+                    : "Generate";
+
+            document.getElementById("generalCimke")
+                .textContent =
+                nyelv === "hu"
+                    ? "Generált kód:"
+                    : "Generated code:";
+
+            document.getElementById("jelentesCimke")
+                .textContent =
+                nyelv === "hu"
+                    ? "Termékkódok jelentése"
+                    : "Meaning of product codes";
+
             datumMegjelenitesFrissitese();
-            document.getElementById("generalKod").innerText = "";
+
+            document.getElementById("generalKod")
+                .textContent = "";
         }
 
         datumMegjelenitesFrissitese();
     </script>
 </body>
-
 </html>
